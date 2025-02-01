@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyboard Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake/build/pdfmake.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake/build/vfs_fonts.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto; 
+            overflow-x: auto;
+            flex: 1;
+        }
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            margin-right: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            border: none;
+        }
+        th, td {
+            padding: 10px;
+            min-width: 150px;
+            word-break: break-word;
+        }
+        textarea, select, input {
+            width: 100%;
+            background: #2a2a2a;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            resize: none;
+            overflow-wrap: break-word;
+            min-height: 20px;
+        }
+        textarea {
+            overflow-y: hidden;
+        }
+        button {
+            background: linear-gradient(135deg, #4a00e0, #8e2de2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            display: block;
+            margin-top: 5px;
+        }
+        .scene-number {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Project Specs</h3>
+        <label>Aspect Ratio:
+            <select id="aspectRatio">
+                <option value="16:9">16:9</option>
+                <option value="21:9">21:9</option>
+                <option value="4:3">4:3</option>
+            </select>
+        </label>
+        <br>
+        <label>Video Length:
+            <input type="text" id="videoLength" placeholder="Enter duration (e.g., 2 min 30 sec)">
+        </label>
+        <br>
+        <label>Project Brief:
+            <textarea id="projectBrief" placeholder="Enter project details..."></textarea>
+        </label>
+        <br>
+        <label>Brand Guide:
+            <input type="url" id="brandGuideURL" placeholder="Enter URL" onblur="createBrandGuideButton()">
+            <button id="brandGuideButton" style="display:none; margin-top: 5px;" onclick="openBrandGuide()">Open Brand Guide</button>
+        </label>
+    </div>
+    
+    <div class="container">
+        <h2>Storyboard Builder</h2>
+        <table id="storyboard">
+            <thead>
+                <tr>
+                    <th>Scene</th>
+                    <th>Narration</th>
+                    <th>Visuals</th>
+                    <th>Specs</th>
+                    <th>Image</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <button onclick="addRow()">Add Row</button>
+        <button onclick="exportToPDF()">Export as PDF</button>
+    </div>
+    
+    <script>
+        function addRow() {
+            const table = document.getElementById("storyboard").getElementsByTagName('tbody')[0];
+            const rowCount = table.rows.length + 1;
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td class="scene-number">${rowCount}</td>
+                <td><textarea placeholder="Narration" oninput="autoResize(this)"></textarea></td>
+                <td><textarea placeholder="Describe visuals" oninput="autoResize(this)"></textarea></td>
+                <td>
+                    <select>
+                        <option value="50mm">50mm</option>
+                        <option value="24mm">24mm</option>
+                        <option value="70-200mm">70-200mm</option>
+                    </select>
+                    <select>
+                        <option value="4K 60fps">4K 60fps</option>
+                        <option value="1080p 120fps">1080p 120fps</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="url" placeholder="Image URL" oninput="updateImage(this)">
+                    <img class="image-preview">
+                </td>
+            `;
+        }
+
+        function updateImage(input) {
+            const img = input.nextElementSibling;
+            img.src = input.value;
+            img.style.display = input.value.trim() ? "block" : "none";
+        }
+
+        function createBrandGuideButton() {
+            const url = document.getElementById("brandGuideURL").value;
+            const button = document.getElementById("brandGuideButton");
+            button.style.display = url.trim() ? "inline-block" : "none";
+        }
+
+        function openBrandGuide() {
+            const url = document.getElementById("brandGuideURL").value;
+            if (url) {
+                window.open(url, "_blank");
+            }
+        }
+
+        function exportToPDF() {
+            const docDefinition = {
+                content: [
+                    { text: 'Storyboard', style: 'header' },
+                    { text: `Brand Guide: ${document.getElementById('brandGuideURL').value}` },
+                    { text: 'Scenes:', style: 'subheader' },
+                    { table: { body: [['Scene', 'Narration', 'Visuals', 'Specs', 'Image']].concat(
+                        Array.from(document.querySelectorAll("tbody tr")).map(row => {
+                            const cells = row.querySelectorAll("td");
+                            return [cells[0].textContent, cells[1].querySelector("textarea").value,
+                                    cells[2].querySelector("textarea").value, cells[3].querySelector("select").value,
+                                    cells[4].querySelector("input").value];
+                        })
+                    ) } }
+                ],
+                styles: { header: { fontSize: 18, bold: true } }
+            };
+            pdfMake.createPdf(docDefinition).download("storyboard.pdf");
+        }
+    </script>
+</body>
+</html>
