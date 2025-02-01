@@ -50,3 +50,4 @@ This project is licensed under the MIT License.
 
 🎥 Storyboard Builder: Bringing your vision to life, one scene at a time! 🚀
 
+🔗 Live Demo: [Storyboard Builder on CodePen](https://codepen.io/james-richardson-the-animator/full/ogvOBwv)
